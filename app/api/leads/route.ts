@@ -1,12 +1,8 @@
-import { and, eq, lt } from "drizzle-orm";
-import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { SITE_CONFIG } from "../../config";
 import { calculateComparison } from "../../finance";
-import { getDb } from "../../../db";
-import { leadRateLimits, leads } from "../../../db/schema";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 const trackingSchema = z
   .object({
@@ -42,67 +38,7 @@ const leadSchema = z.object({
   tracking: trackingSchema,
 });
 
-type RuntimeEnvironment = {
-  DB?: D1Database;
-  LEAD_WEBHOOK_URL?: string;
-  LEAD_WEBHOOK_SECRET?: string;
-};
-
-async function ensureSchema() {
-  const runtimeEnv = env as RuntimeEnvironment;
-  if (!runtimeEnv.DB) return;
-
-  await runtimeEnv.DB.batch([
-    runtimeEnv.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS leads (
-        id TEXT PRIMARY KEY NOT NULL,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        full_name TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        email TEXT,
-        household_income_cents INTEGER NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        available_entry_cents INTEGER NOT NULL,
-        credit_type TEXT NOT NULL,
-        desired_credit_cents INTEGER NOT NULL,
-        ideal_installment_cents INTEGER NOT NULL,
-        consortium_months INTEGER NOT NULL,
-        financing_months INTEGER NOT NULL,
-        rates_snapshot TEXT NOT NULL,
-        result_snapshot TEXT NOT NULL,
-        utm_source TEXT,
-        utm_medium TEXT,
-        utm_campaign TEXT,
-        utm_term TEXT,
-        utm_content TEXT,
-        gclid TEXT,
-        fbclid TEXT,
-        source_page TEXT,
-        referrer TEXT,
-        consent INTEGER NOT NULL,
-        consent_version TEXT NOT NULL,
-        consent_at TEXT NOT NULL,
-        webhook_status TEXT NOT NULL DEFAULT 'not_configured',
-        webhook_attempts INTEGER NOT NULL DEFAULT 0,
-        specialist_interest INTEGER NOT NULL DEFAULT 0
-      )
-    `),
-    runtimeEnv.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS lead_rate_limits (
-        key TEXT PRIMARY KEY NOT NULL,
-        window_started_at INTEGER NOT NULL,
-        count INTEGER NOT NULL DEFAULT 1
-      )
-    `),
-    runtimeEnv.DB.prepare(
-      "CREATE INDEX IF NOT EXISTS leads_created_at_idx ON leads(created_at)",
-    ),
-    runtimeEnv.DB.prepare(
-      "CREATE INDEX IF NOT EXISTS leads_phone_idx ON leads(phone)",
-    ),
-  ]);
-}
+const rateLimitStore = new Map<string, { count: number; startedAt: number }>();
 
 async function hashRateLimitKey(request: Request) {
   const address =
@@ -117,34 +53,18 @@ async function hashRateLimitKey(request: Request) {
 }
 
 async function isRateLimited(request: Request) {
-  const db = getDb();
   const key = await hashRateLimitKey(request);
   const now = Date.now();
   const windowMs = 15 * 60 * 1000;
   const limit = 8;
-  await db
-    .delete(leadRateLimits)
-    .where(lt(leadRateLimits.windowStartedAt, now - windowMs));
-  const [row] = await db
-    .select()
-    .from(leadRateLimits)
-    .where(eq(leadRateLimits.key, key))
-    .limit(1);
 
-  if (!row) {
-    await db.insert(leadRateLimits).values({ key, windowStartedAt: now, count: 1 });
+  const row = rateLimitStore.get(key);
+  if (!row || row.startedAt < now - windowMs) {
+    rateLimitStore.set(key, { count: 1, startedAt: now });
     return false;
   }
   if (row.count >= limit) return true;
-  await db
-    .update(leadRateLimits)
-    .set({ count: row.count + 1 })
-    .where(
-      and(
-        eq(leadRateLimits.key, key),
-        eq(leadRateLimits.windowStartedAt, row.windowStartedAt),
-      ),
-    );
+  rateLimitStore.set(key, { ...row, count: row.count + 1 });
   return false;
 }
 
@@ -208,89 +128,59 @@ export async function POST(request: Request) {
   let persisted = false;
   let webhookStatus = "not_configured";
 
-  try {
-    await ensureSchema();
-    if (await isRateLimited(request)) {
-      return Response.json(
-        { error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." },
-        { status: 429 },
-      );
-    }
+  if (await isRateLimited(request)) {
+    return Response.json(
+      { error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." },
+      { status: 429 },
+    );
+  }
 
-    const db = getDb();
-    const ratesSnapshot = JSON.stringify(SITE_CONFIG.credit[parsed.creditType]);
-    await db.insert(leads).values({
+  const webhookUrl = process.env.LEAD_WEBHOOK_URL;
+  if (webhookUrl) {
+    webhookStatus = "pending";
+    const payload = JSON.stringify({
       id: leadId,
-      fullName: parsed.fullName,
-      phone: parsed.phone,
-      email: parsed.email || null,
-      householdIncomeCents: Math.round(parsed.householdIncome * 100),
-      city: parsed.city,
-      state: parsed.state.toUpperCase(),
-      availableEntryCents: Math.round(parsed.availableEntry * 100),
-      creditType: parsed.creditType,
-      desiredCreditCents: Math.round(parsed.desiredCredit * 100),
-      idealInstallmentCents: Math.round(parsed.idealInstallment * 100),
-      consortiumMonths: result.consortium.months,
-      financingMonths: result.financing.months,
-      ratesSnapshot,
-      resultSnapshot: JSON.stringify(result),
-      utmSource: parsed.tracking.utmSource || null,
-      utmMedium: parsed.tracking.utmMedium || null,
-      utmCampaign: parsed.tracking.utmCampaign || null,
-      utmTerm: parsed.tracking.utmTerm || null,
-      utmContent: parsed.tracking.utmContent || null,
-      gclid: parsed.tracking.gclid || null,
-      fbclid: parsed.tracking.fbclid || null,
-      sourcePage: parsed.tracking.sourcePage || null,
-      referrer: parsed.tracking.referrer || null,
-      consent: true,
-      consentVersion: SITE_CONFIG.consentVersion,
-      consentAt,
-      webhookStatus,
+      createdAt: consentAt,
+      lead: {
+        fullName: parsed.fullName,
+        phone: parsed.phone,
+        email: parsed.email || null,
+        householdIncome: parsed.householdIncome,
+        city: parsed.city,
+        state: parsed.state.toUpperCase(),
+      },
+      request: {
+        availableEntry: parsed.availableEntry,
+        creditType: parsed.creditType,
+        desiredCredit: parsed.desiredCredit,
+        idealInstallment: parsed.idealInstallment,
+      },
+      simulation: result,
+      tracking: parsed.tracking,
+      consent: {
+        version: SITE_CONFIG.consentVersion,
+        acceptedAt: consentAt,
+      },
     });
-    persisted = true;
 
-    const runtimeEnv = env as RuntimeEnvironment;
-    if (runtimeEnv.LEAD_WEBHOOK_URL) {
-      webhookStatus = "pending";
-      const payload = JSON.stringify({
-        id: leadId,
-        createdAt: consentAt,
-        lead: {
-          fullName: parsed.fullName,
-          phone: parsed.phone,
-          email: parsed.email || null,
-          city: parsed.city,
-          state: parsed.state.toUpperCase(),
+    try {
+      const webhookSecret = process.env.LEAD_WEBHOOK_SECRET;
+      const signature = webhookSecret
+        ? await signPayload(payload, webhookSecret)
+        : "";
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(signature ? { "x-saresolve-signature": signature } : {}),
         },
-        simulation: result,
-        tracking: parsed.tracking,
+        body: payload,
       });
-      try {
-        const signature = runtimeEnv.LEAD_WEBHOOK_SECRET
-          ? await signPayload(payload, runtimeEnv.LEAD_WEBHOOK_SECRET)
-          : "";
-        const response = await fetch(runtimeEnv.LEAD_WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            ...(signature ? { "x-saresolve-signature": signature } : {}),
-          },
-          body: payload,
-        });
-        webhookStatus = response.ok ? "sent" : "pending";
-      } catch {
-        webhookStatus = "pending";
-      }
-      await db
-        .update(leads)
-        .set({ webhookStatus, webhookAttempts: 1 })
-        .where(eq(leads.id, leadId));
+      webhookStatus = response.ok ? "sent" : "pending";
+      persisted = response.ok;
+    } catch {
+      webhookStatus = "pending";
     }
-  } catch {
-    // The comparison remains available even if persistence is temporarily down.
-    // PII is deliberately not written to browser storage or application logs.
   }
 
   return Response.json({

@@ -8,13 +8,13 @@ consórcio e financiamento para imóveis e automóveis.
 Taxas, prazos, faixas de crédito, textos de consentimento e feature flags ficam
 centralizados em `app/config.ts`.
 
-O site usa o binding D1 `DB` para persistir leads. As tabelas são inicializadas
-de forma idempotente pela rota de cadastro e também possuem migrações em
-`drizzle/`.
+Na implantação pela Vercel, a simulação funciona com o runtime nativo do
+Next.js. O envio dos leads pode ser conectado a uma planilha, CRM ou banco de
+dados por webhook.
 
 Variáveis opcionais:
 
-- `LEAD_WEBHOOK_URL`: endpoint para receber novos leads.
+- `LEAD_WEBHOOK_URL`: endpoint HTTPS para receber novos leads.
 - `LEAD_WEBHOOK_SECRET`: segredo para assinatura HMAC do webhook.
 - `NEXT_PUBLIC_META_PIXEL_ID`: reservado para Meta Pixel.
 - `NEXT_PUBLIC_GA_ID`: reservado para Google Analytics.
