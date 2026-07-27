@@ -81,20 +81,18 @@ const opportunityFieldAliases: Record<string, string[]> = {
   desiredCredit: ["valor do credito", "credito simulacao"],
   idealInstallment: ["parcela ideal", "parcela ideal simulacao"],
   householdIncome: ["renda media familiar"],
-  hasEntry: ["possui entrada", "tem entrada"],
 };
 
 function opportunityFieldValues(lead: HighLevelLead) {
   return {
     creditType:
       lead.result.creditType === "property" ? "Imóvel" : "Automóvel",
-    availableEntry: formatCurrency(lead.availableEntry),
+    availableEntry: lead.hasEntry
+      ? formatCurrency(lead.availableEntry)
+      : "Não",
     desiredCredit: formatCurrency(lead.result.creditValue),
     idealInstallment: formatCurrency(lead.result.idealInstallment),
     householdIncome: formatCurrency(lead.householdIncome),
-    hasEntry: lead.hasEntry
-      ? `Sim — ${formatCurrency(lead.availableEntry)}`
-      : "Não",
   };
 }
 

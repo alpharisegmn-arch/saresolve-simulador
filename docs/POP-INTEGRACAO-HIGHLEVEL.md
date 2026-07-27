@@ -123,7 +123,6 @@ Os tokens são criptografados antes de serem armazenados no Postgres.
 Criar os campos na modalidade **Oportunidade**, dentro da pasta `SIMULAÇÃO`:
 
 - Categoria do Crédito
-- Possui Entrada
 - Valor de Entrada
 - Valor do Crédito
 - Parcela Ideal
@@ -134,13 +133,10 @@ Tipo recomendado: **Linha única**.
 O simulador consulta os campos de oportunidade pela API e os identifica por
 nome/chave, sem depender de IDs fixos.
 
-Regra do campo **Possui Entrada**:
+Regra do campo **Valor de Entrada**:
 
 - escolha “Não”: `Não`
-- escolha “Sim”: `Sim — R$ valor informado`
-
-O campo **Valor de Entrada** recebe separadamente o valor formatado, inclusive
-`R$ 0,00` quando não houver entrada.
+- escolha “Sim”: `R$ valor informado`
 
 ## 10. Tags
 
@@ -169,8 +165,8 @@ Em cada teste, conferir:
 - tags corretas, sem duplicidade;
 - oportunidade no funil e etapa corretos;
 - valor monetário igual ao crédito desejado;
-- seis campos personalizados preenchidos;
-- “Possui Entrada” seguindo a regra definida;
+- cinco campos personalizados preenchidos;
+- “Valor de Entrada” seguindo a regra definida;
 - resultado exibido normalmente ao lead.
 
 ## 12. Checklist de manutenção
@@ -183,4 +179,3 @@ Em cada teste, conferir:
 - Os campos continuam no modelo Oportunidade?
 - A conexão OAuth ainda está ativa?
 - Os logs da Vercel apresentam respostas 2xx do HighLevel?
-
