@@ -12,7 +12,8 @@ export async function GET() {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 10 * 60,
+      // Allow enough time for login, account selection and consent.
+      maxAge: 30 * 60,
       path: "/",
     });
     return Response.redirect(getHighLevelInstallUrl(state));
