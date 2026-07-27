@@ -1195,6 +1195,10 @@ footer > div:first-child,
   gap: 18px;
 }
 
+.results-overview {
+  margin-top: 30px;
+}
+
 .summary-card {
   min-height: 150px;
   padding: 23px;
@@ -1265,7 +1269,7 @@ footer > div:first-child,
 }
 
 .comparison-heading {
-  margin: 68px 0 22px;
+  margin: 0 0 22px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -2349,7 +2353,7 @@ footer > div:first-child,
   }
 
   .comparison-heading {
-    margin-top: 52px;
+    margin-top: 0;
     align-items: flex-start;
     flex-direction: column;
     gap: 10px;

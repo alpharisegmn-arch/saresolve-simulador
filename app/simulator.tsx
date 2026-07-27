@@ -215,54 +215,6 @@ function Results({
           </button>
         </header>
 
-        <div className="credit-highlight">
-          <div>
-            <span>Valor do crédito</span>
-            <strong>{formatCurrency(result.creditValue)}</strong>
-          </div>
-          <div className="credit-context">
-            <span>{property ? "Imóvel" : "Automóvel"}</span>
-            <span>
-              {result.consortium.months} meses
-              {sameTerm ? " nas duas modalidades" : " no consórcio"}
-            </span>
-          </div>
-        </div>
-
-        <div className="result-summary-grid">
-          <article className="summary-card summary-card-primary">
-            <span>Diferença no custo total</span>
-            <strong>{formatCurrency(result.comparison.totalDifference)}</strong>
-            <p>Menor total estimado: {totalLeader}</p>
-          </article>
-          <article className="summary-card summary-card-entry">
-            <span>Diferença de entrada</span>
-            <strong>{formatCurrency(result.comparison.entryDifference)}</strong>
-            <p>
-              {result.financing.entry > 0
-                ? "Valor de entrada informado e considerado no financiamento."
-                : "Financiamento calculado sem entrada, conforme informado."}
-            </p>
-          </article>
-          <article
-            className={`summary-card ${property ? "summary-card-term" : "summary-card-installment"}`}
-          >
-            <span>{property ? "Diferença de prazo" : "Economia na parcela"}</span>
-            <strong>
-              {property
-                ? `${result.comparison.monthDifference} meses`
-                : formatCurrency(installmentDifference)}
-            </strong>
-            <p>
-              {property
-                ? consortiumShorter
-                  ? `O consórcio termina ${result.comparison.monthDifference} meses antes.`
-                  : `O financiamento termina ${result.comparison.monthDifference} meses antes.`
-                : `${lowerInstallment} apresenta a menor parcela estimada.`}
-            </p>
-          </article>
-        </div>
-
         <div className="comparison-heading">
           <div>
             <p className="result-kicker">Comparação completa</p>
@@ -392,6 +344,62 @@ function Results({
               />
             </div>
           </article>
+        </div>
+
+        <div className="results-overview">
+          <div className="credit-highlight">
+            <div>
+              <span>Valor do crédito</span>
+              <strong>{formatCurrency(result.creditValue)}</strong>
+            </div>
+            <div className="credit-context">
+              <span>{property ? "Imóvel" : "Automóvel"}</span>
+              <span>
+                {result.consortium.months} meses
+                {sameTerm ? " nas duas modalidades" : " no consórcio"}
+              </span>
+            </div>
+          </div>
+
+          <div className="result-summary-grid">
+            <article className="summary-card summary-card-primary">
+              <span>Diferença no custo total</span>
+              <strong>
+                {formatCurrency(result.comparison.totalDifference)}
+              </strong>
+              <p>Menor total estimado: {totalLeader}</p>
+            </article>
+            <article className="summary-card summary-card-entry">
+              <span>Diferença de entrada</span>
+              <strong>
+                {formatCurrency(result.comparison.entryDifference)}
+              </strong>
+              <p>
+                {result.financing.entry > 0
+                  ? "Valor de entrada informado e considerado no financiamento."
+                  : "Financiamento calculado sem entrada, conforme informado."}
+              </p>
+            </article>
+            <article
+              className={`summary-card ${property ? "summary-card-term" : "summary-card-installment"}`}
+            >
+              <span>
+                {property ? "Diferença de prazo" : "Economia na parcela"}
+              </span>
+              <strong>
+                {property
+                  ? `${result.comparison.monthDifference} meses`
+                  : formatCurrency(installmentDifference)}
+              </strong>
+              <p>
+                {property
+                  ? consortiumShorter
+                    ? `O consórcio termina ${result.comparison.monthDifference} meses antes.`
+                    : `O financiamento termina ${result.comparison.monthDifference} meses antes.`
+                  : `${lowerInstallment} apresenta a menor parcela estimada.`}
+              </p>
+            </article>
+          </div>
         </div>
 
         {(result.financing.entryGap > 0 ||
