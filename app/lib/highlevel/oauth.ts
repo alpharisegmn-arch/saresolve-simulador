@@ -60,14 +60,9 @@ export async function exchangeAuthorizationCode(code: string) {
     clientId: config.clientId,
     clientSecret: config.clientSecret,
     grantType: "authorization_code",
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    grant_type: "authorization_code",
     code,
     userType: "Location",
     redirectUri: config.redirectUri,
-    user_type: "Location",
-    redirect_uri: config.redirectUri,
   });
   if (!token.locationId) {
     throw new Error("O HighLevel não retornou a subconta instalada.");
@@ -92,14 +87,8 @@ export async function refreshInstallation(
     clientSecret: config.clientSecret,
     grantType: "refresh_token",
     refreshToken: installation.refreshToken,
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    grant_type: "refresh_token",
-    refresh_token: installation.refreshToken,
     userType: "Location",
     redirectUri: config.redirectUri,
-    user_type: "Location",
-    redirect_uri: config.redirectUri,
   });
   return saveInstallation({
     ...installation,
