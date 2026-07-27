@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SITE_CONFIG } from "../../config";
 import { calculateComparison } from "../../finance";
+import { syncLeadToHighLevel } from "../../lib/highlevel/client";
 
 export const runtime = "nodejs";
 
@@ -127,6 +128,7 @@ export async function POST(request: Request) {
   const consentAt = new Date().toISOString();
   let persisted = false;
   let webhookStatus = "not_configured";
+  let crmStatus = "not_configured";
 
   if (await isRateLimited(request)) {
     return Response.json(
@@ -182,10 +184,27 @@ export async function POST(request: Request) {
     }
   }
 
+  try {
+    const crmResult = await syncLeadToHighLevel({
+      leadId,
+      fullName: parsed.fullName,
+      phone: parsed.phone,
+      householdIncome: parsed.householdIncome,
+      availableEntry: parsed.availableEntry,
+      result,
+      tracking: parsed.tracking,
+    });
+    crmStatus = crmResult.status;
+    persisted = persisted || crmResult.status === "sent";
+  } catch {
+    crmStatus = "pending";
+  }
+
   return Response.json({
     id: leadId,
     persisted,
     webhookStatus,
+    crmStatus,
     result,
   });
 }

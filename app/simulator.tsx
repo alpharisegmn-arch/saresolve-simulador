@@ -731,10 +731,10 @@ export function Simulator() {
         <div className="dialog-head">
           <div>
             <p className="section-kicker">Etapa final</p>
-            <h2>Receba sua simulação pelo WhatsApp.</h2>
+            <h2>Receba os dados da simulação pelo WhatsApp.</h2>
             <p>
-              Preencha os dados abaixo e confirme o WhatsApp que receberá as
-              informações da sua simulação.
+              Preencha os dados abaixo e confirme o WhatsApp que receberá os
+              dados da simulação.
             </p>
           </div>
           <button
@@ -768,7 +768,9 @@ export function Simulator() {
             />
           </div>
           <div className="lead-field full-field">
-            <label htmlFor="phone">WhatsApp para receber a simulação</label>
+            <label htmlFor="phone">
+              WhatsApp para receber os dados da simulação
+            </label>
             <input
               id="phone"
               value={lead.phone}
