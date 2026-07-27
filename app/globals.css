@@ -1009,6 +1009,32 @@ footer > div:first-child,
   margin-top: 4px;
 }
 
+.phone-confirmation {
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #155f39;
+  background: #ecfdf3;
+  border: 1px solid #a7e8c4;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.phone-confirmation input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #168a4d;
+  flex: 0 0 auto;
+}
+
+.phone-confirmation strong {
+  color: #0d6b3a;
+  font-weight: 750;
+}
+
 .lead-dialog .consent {
   margin-top: 2px;
   line-height: 1.45;

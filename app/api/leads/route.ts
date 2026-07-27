@@ -25,7 +25,7 @@ const leadSchema = z.object({
     .string()
     .transform((value) => value.replace(/\D/g, ""))
     .refine((value) => value.length === 10 || value.length === 11),
-  email: z.union([z.literal(""), z.string().trim().email().max(200)]).optional(),
+  phoneConfirmed: z.literal(true),
   householdIncome: z.number().finite().min(0).max(100_000_000),
   city: z.string().trim().max(100).optional().default(""),
   state: z.string().trim().max(2).optional().default(""),
@@ -144,7 +144,6 @@ export async function POST(request: Request) {
       lead: {
         fullName: parsed.fullName,
         phone: parsed.phone,
-        email: parsed.email || null,
         householdIncome: parsed.householdIncome,
         city: parsed.city,
         state: parsed.state.toUpperCase(),

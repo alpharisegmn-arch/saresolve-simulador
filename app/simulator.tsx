@@ -17,7 +17,7 @@ import {
 type LeadForm = {
   fullName: string;
   phone: string;
-  email: string;
+  phoneConfirmed: boolean;
   householdIncome: string;
   consent: boolean;
   website: string;
@@ -26,7 +26,7 @@ type LeadForm = {
 const initialLead: LeadForm = {
   fullName: "",
   phone: "",
-  email: "",
+  phoneConfirmed: false,
   householdIncome: "",
   consent: false,
   website: "",
@@ -731,10 +731,10 @@ export function Simulator() {
         <div className="dialog-head">
           <div>
             <p className="section-kicker">Etapa final</p>
-            <h2>Seu comparativo está quase pronto.</h2>
+            <h2>Receba sua simulação pelo WhatsApp.</h2>
             <p>
-              Preencha seus dados para acessar a comparação completa entre
-              consórcio e financiamento.
+              Preencha os dados abaixo e confirme o WhatsApp que receberá as
+              informações da sua simulação.
             </p>
           </div>
           <button
@@ -767,31 +767,42 @@ export function Simulator() {
               required
             />
           </div>
-          <div className="lead-field">
-            <label htmlFor="email">E-mail <small>opcional</small></label>
-            <input
-              id="email"
-              type="email"
-              value={lead.email}
-              onChange={(event) => updateLead("email", event.target.value)}
-              autoComplete="email"
-              placeholder="voce@exemplo.com"
-            />
-          </div>
-          <div className="lead-field">
-            <label htmlFor="phone">Telefone / WhatsApp</label>
+          <div className="lead-field full-field">
+            <label htmlFor="phone">WhatsApp para receber a simulação</label>
             <input
               id="phone"
               value={lead.phone}
-              onChange={(event) => updateLead("phone", maskPhone(event.target.value))}
+              onChange={(event) => {
+                updateLead("phone", maskPhone(event.target.value));
+                updateLead("phoneConfirmed", false);
+              }}
               autoComplete="tel"
               inputMode="tel"
               placeholder="(11) 99999-9999"
               pattern="\(\d{2}\)\s\d{4,5}-\d{4}"
               required
             />
-            <small>Use um WhatsApp válido para vincular sua simulação.</small>
+            <small>
+              Digite um número com WhatsApp ativo. Enviaremos os dados da
+              simulação para ele.
+            </small>
           </div>
+
+          <label className="phone-confirmation full-field">
+            <input
+              type="checkbox"
+              checked={lead.phoneConfirmed}
+              onChange={(event) =>
+                updateLead("phoneConfirmed", event.target.checked)
+              }
+              required
+            />
+            <span>
+              Confirmo que o WhatsApp{" "}
+              <strong>{lead.phone || "informado acima"}</strong> está correto.
+            </span>
+          </label>
+
           <div className="lead-field">
             <label htmlFor="householdIncome">Renda média familiar</label>
             <MoneyInput
@@ -832,7 +843,9 @@ export function Simulator() {
           )}
 
           <button className="primary-button full-field" type="submit" disabled={submitting}>
-            {submitting ? "Preparando comparação..." : "Ver meu comparativo"}
+            {submitting
+              ? "Preparando comparação..."
+              : "Ver e receber meu comparativo"}
             {!submitting && <span aria-hidden="true">→</span>}
           </button>
         </form>

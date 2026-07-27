@@ -16,15 +16,16 @@ export default function PrivacyPolicy() {
         </p>
         <h2>Dados coletados</h2>
         <p>
-          Podemos coletar nome, telefone, e-mail opcional, renda familiar,
-          valor disponível, dados da simulação e informações de
-          origem da visita, como parâmetros de campanha.
+          Podemos coletar nome, número de WhatsApp, renda familiar, valor
+          disponível, dados da simulação e informações de origem da visita,
+          como parâmetros de campanha.
         </p>
         <h2>Finalidades</h2>
         <p>
           Os dados são usados para calcular e vincular o comparativo solicitado,
-          compreender a origem dos acessos, prevenir abuso e permitir contato
-          relacionado às modalidades consultadas.
+          enviar os dados da simulação pelo WhatsApp, compreender a origem dos
+          acessos, prevenir abuso e permitir contato relacionado às modalidades
+          consultadas.
         </p>
         <h2>Compartilhamento</h2>
         <p>
