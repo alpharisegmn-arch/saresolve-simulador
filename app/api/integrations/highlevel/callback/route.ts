@@ -35,7 +35,11 @@ export async function GET(request: Request) {
     const installation = await exchangeAuthorizationCode(code);
     destination.searchParams.set("status", "success");
     destination.searchParams.set("location", installation.locationId);
-  } catch {
+  } catch (error) {
+    console.error(
+      "Falha ao concluir OAuth HighLevel:",
+      error instanceof Error ? error.message : "erro desconhecido",
+    );
     destination.searchParams.set("status", "error");
   }
   return Response.redirect(destination);

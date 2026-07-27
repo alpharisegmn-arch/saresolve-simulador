@@ -40,7 +40,7 @@ async function requestToken(body: Record<string, string>) {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
-        Version: "2021-07-28",
+        Version: "v3",
       },
       body: new URLSearchParams(body),
       cache: "no-store",
@@ -57,12 +57,12 @@ async function requestToken(body: Record<string, string>) {
 export async function exchangeAuthorizationCode(code: string) {
   const config = getHighLevelConfig();
   const token = await requestToken({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    grant_type: "authorization_code",
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    grantType: "authorization_code",
     code,
-    user_type: "Location",
-    redirect_uri: config.redirectUri,
+    userType: "Location",
+    redirectUri: config.redirectUri,
   });
   if (!token.locationId) {
     throw new Error("O HighLevel não retornou a subconta instalada.");
@@ -83,12 +83,12 @@ export async function refreshInstallation(
 ) {
   const config = getHighLevelConfig();
   const token = await requestToken({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    grant_type: "refresh_token",
-    refresh_token: installation.refreshToken,
-    user_type: "Location",
-    redirect_uri: config.redirectUri,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    grantType: "refresh_token",
+    refreshToken: installation.refreshToken,
+    userType: "Location",
+    redirectUri: config.redirectUri,
   });
   return saveInstallation({
     ...installation,
