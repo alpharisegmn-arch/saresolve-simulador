@@ -1014,25 +1014,45 @@ footer > div:first-child,
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  color: #155f39;
-  background: #ecfdf3;
-  border: 1px solid #a7e8c4;
+  color: #9f1f25;
+  background: #fff1f2;
+  border: 1px solid #ff9aa0;
   border-radius: 6px;
   font-size: 11px;
   line-height: 1.45;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .phone-confirmation input {
   width: 17px;
   height: 17px;
   margin: 0;
-  accent-color: #168a4d;
+  accent-color: #d9343b;
   flex: 0 0 auto;
 }
 
 .phone-confirmation strong {
-  color: #0d6b3a;
+  color: #8c171d;
   font-weight: 750;
+}
+
+.phone-confirmation.is-confirmed {
+  color: #155f39;
+  background: #ecfdf3;
+  border-color: #7bd8a5;
+  box-shadow: 0 0 0 2px rgba(22, 138, 77, 0.08);
+}
+
+.phone-confirmation.is-confirmed input {
+  accent-color: #168a4d;
+}
+
+.phone-confirmation.is-confirmed strong {
+  color: #0d6b3a;
 }
 
 .lead-dialog .consent {

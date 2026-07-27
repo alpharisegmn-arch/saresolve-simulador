@@ -17,6 +17,7 @@ export type HighLevelLead = {
   fullName: string;
   phone: string;
   householdIncome: number;
+  hasEntry: boolean;
   availableEntry: number;
   result: ComparisonResult;
   tracking: Tracking;
@@ -52,63 +53,17 @@ async function highLevelFetch(
   return response;
 }
 
-function configuredCustomFields(lead: HighLevelLead) {
-  const defaultFieldMap: Record<string, string> = {
-    creditType: "contact.categoria_simulao",
-    desiredCredit: "contact.crdito_simulao",
-    idealInstallment: "contact.parcela_ideal_simulao",
-    householdIncome: "contact.renda_mdia_familiar",
-  };
-  const rawMap = process.env.GHL_CUSTOM_FIELD_MAP;
-  let fieldMap = defaultFieldMap;
-  if (rawMap) {
-    try {
-      fieldMap = {
-        ...defaultFieldMap,
-        ...(JSON.parse(rawMap) as Record<string, string>),
-      };
-    } catch {
-      throw new Error("GHL_CUSTOM_FIELD_MAP contém um JSON inválido.");
-    }
-  }
-
-  const values: Record<string, string> = {
-    householdIncome: formatCurrency(lead.householdIncome),
-    creditType:
-      lead.result.creditType === "property" ? "Imóvel" : "Automóvel",
-    desiredCredit: formatCurrency(lead.result.creditValue),
-    idealInstallment: formatCurrency(lead.result.idealInstallment),
-    availableEntry: formatCurrency(lead.availableEntry),
-    consortiumInstallment: formatCurrency(lead.result.consortium.installment),
-    consortiumTotal: formatCurrency(lead.result.consortium.total),
-    financingInstallment: formatCurrency(
-      lead.result.financing.firstInstallment,
-    ),
-    financingTotal: formatCurrency(lead.result.financing.total),
-    estimatedSavings: formatCurrency(lead.result.comparison.totalDifference),
-    utmSource: lead.tracking.utmSource ?? "",
-    utmMedium: lead.tracking.utmMedium ?? "",
-    utmCampaign: lead.tracking.utmCampaign ?? "",
-    utmTerm: lead.tracking.utmTerm ?? "",
-    utmContent: lead.tracking.utmContent ?? "",
-    gclid: lead.tracking.gclid ?? "",
-    fbclid: lead.tracking.fbclid ?? "",
-  };
-
-  return Object.entries(fieldMap)
-    .filter(([key, identifier]) => identifier && values[key] !== undefined)
-    .map(([key, identifier]) => ({
-      ...(identifier.startsWith("contact.")
-        ? { key: identifier }
-        : { id: identifier }),
-      fieldValue: values[key],
-    }));
-}
-
 type Pipeline = {
   id: string;
   name: string;
   stages?: Array<{ id: string; name: string }>;
+};
+
+type OpportunityCustomField = {
+  id: string;
+  name: string;
+  fieldKey: string;
+  model?: string;
 };
 
 function comparableName(value: string) {
@@ -118,6 +73,75 @@ function comparableName(value: string) {
     .replace(/[^a-z\d]+/gi, " ")
     .trim()
     .toLowerCase();
+}
+
+const opportunityFieldAliases: Record<string, string[]> = {
+  creditType: ["categoria do credito", "categoria simulacao"],
+  availableEntry: ["valor de entrada", "entrada"],
+  desiredCredit: ["valor do credito", "credito simulacao"],
+  idealInstallment: ["parcela ideal", "parcela ideal simulacao"],
+  householdIncome: ["renda media familiar"],
+  hasEntry: ["possui entrada", "tem entrada"],
+};
+
+function opportunityFieldValues(lead: HighLevelLead) {
+  return {
+    creditType:
+      lead.result.creditType === "property" ? "Imóvel" : "Automóvel",
+    availableEntry: formatCurrency(lead.availableEntry),
+    desiredCredit: formatCurrency(lead.result.creditValue),
+    idealInstallment: formatCurrency(lead.result.idealInstallment),
+    householdIncome: formatCurrency(lead.householdIncome),
+    hasEntry: lead.hasEntry
+      ? `Sim — ${formatCurrency(lead.availableEntry)}`
+      : "Não",
+  };
+}
+
+async function resolveOpportunityCustomFields(
+  installation: HighLevelInstallation,
+  lead: HighLevelLead,
+) {
+  const response = await highLevelFetch(
+    installation,
+    `/locations/${encodeURIComponent(
+      installation.locationId,
+    )}/customFields?model=opportunity`,
+    {
+      method: "GET",
+      headers: { Version: "v3" },
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `HighLevel recusou a consulta dos campos da oportunidade (${response.status}): ${await response.text()}`,
+    );
+  }
+
+  const payload = (await response.json()) as {
+    customFields?: OpportunityCustomField[];
+  };
+  const fields = payload.customFields ?? [];
+  const values = opportunityFieldValues(lead);
+
+  return Object.entries(opportunityFieldAliases).flatMap(([valueKey, aliases]) => {
+    const field = fields.find((candidate) => {
+      if (candidate.model && candidate.model !== "opportunity") return false;
+      const comparableField = comparableName(
+        `${candidate.name} ${candidate.fieldKey}`,
+      );
+      return aliases.some((alias) =>
+        comparableField.includes(comparableName(alias)),
+      );
+    });
+    if (!field) return [];
+    return [
+      {
+        id: field.id,
+        fieldValue: values[valueKey as keyof typeof values],
+      },
+    ];
+  });
 }
 
 async function resolvePipeline(
@@ -189,12 +213,11 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
         phone: brazilianPhone(lead.phone),
         source: "Simulador SaResolve",
         tags: [
-          "Lead Simulador SaResolve",
+          "lead simulador saresolve",
           lead.result.creditType === "property"
-            ? "Crédito Imobiliário"
-            : "Crédito Automotivo",
+            ? "[imóvel]"
+            : "[auto]",
         ],
-        customFields: configuredCustomFields(lead),
       }),
     },
   );
@@ -216,12 +239,16 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
     "pipeline_not_found";
 
   if (pipeline) {
+    const customFields = await resolveOpportunityCustomFields(
+      installation,
+      lead,
+    );
     const opportunityResponse = await highLevelFetch(
       installation,
       "/opportunities/upsert",
       {
         method: "POST",
-        headers: { Version: "2021-07-28" },
+        headers: { Version: "v3" },
         body: JSON.stringify({
           locationId: installation.locationId,
           pipelineId: pipeline.pipelineId,
@@ -233,6 +260,7 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
           status: "open",
           monetaryValue: lead.result.creditValue,
           source: "Simulador SaResolve",
+          customFields,
         }),
       },
     );

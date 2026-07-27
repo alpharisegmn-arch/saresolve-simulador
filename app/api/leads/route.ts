@@ -30,6 +30,7 @@ const leadSchema = z.object({
   householdIncome: z.number().finite().min(0).max(100_000_000),
   city: z.string().trim().max(100).optional().default(""),
   state: z.string().trim().max(2).optional().default(""),
+  hasEntry: z.boolean().optional(),
   availableEntry: z.number().finite().min(0).max(100_000_000),
   creditType: z.enum(["property", "vehicle"]),
   desiredCredit: z.number().finite().positive(),
@@ -151,6 +152,7 @@ export async function POST(request: Request) {
         state: parsed.state.toUpperCase(),
       },
       request: {
+        hasEntry: parsed.hasEntry ?? parsed.availableEntry > 0,
         availableEntry: parsed.availableEntry,
         creditType: parsed.creditType,
         desiredCredit: parsed.desiredCredit,
@@ -190,6 +192,7 @@ export async function POST(request: Request) {
       fullName: parsed.fullName,
       phone: parsed.phone,
       householdIncome: parsed.householdIncome,
+      hasEntry: parsed.hasEntry ?? parsed.availableEntry > 0,
       availableEntry: parsed.availableEntry,
       result,
       tracking: parsed.tracking,

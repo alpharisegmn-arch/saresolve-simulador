@@ -571,6 +571,7 @@ export function Simulator() {
           householdIncome: parseMoney(lead.householdIncome),
           city: "",
           state: "",
+          hasEntry: entryChoice === "yes",
           availableEntry:
             entryChoice === "yes" ? parseMoney(availableEntry) : 0,
           creditType,
@@ -790,7 +791,11 @@ export function Simulator() {
             </small>
           </div>
 
-          <label className="phone-confirmation full-field">
+          <label
+            className={`phone-confirmation full-field${
+              lead.phoneConfirmed ? " is-confirmed" : ""
+            }`}
+          >
             <input
               type="checkbox"
               checked={lead.phoneConfirmed}
