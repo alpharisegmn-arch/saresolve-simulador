@@ -245,8 +245,14 @@ button {
   letter-spacing: -0.065em;
 }
 
-.hero h1 span {
+.hero h1 .hero-highlight {
   color: #70a6ff;
+  font-family: var(--font-playfair-display), Georgia, "Times New Roman", serif;
+  font-weight: 600;
+}
+
+.hero h1 .hero-ending {
+  color: var(--white);
 }
 
 .hero-lead {
