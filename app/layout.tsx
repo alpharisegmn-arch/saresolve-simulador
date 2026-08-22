@@ -22,8 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "Compare entrada, parcelas, prazo e custo total estimado de consórcio e financiamento para imóveis e automóveis.",
     icons: {
-      icon: "/favicon.svg",
-      shortcut: "/favicon.svg",
+      icon: "/favicon.png",
+      shortcut: "/favicon.png",
     },
     openGraph: {
       title: "SaResolve | Compare antes de decidir",
