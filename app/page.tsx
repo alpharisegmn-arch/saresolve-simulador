@@ -23,11 +23,8 @@ export default function Home() {
             Simule o crédito para seu carro ou imóvel
           </div>
           <h1>
-            Simule as{" "}
-            <span className="hero-highlight">
-              melhores modalidades de crédito
-            </span>{" "}
-            <span className="hero-ending">antes de decidir.</span>
+            Simule as <span className="hero-highlight">melhores modalidades</span>{" "}
+            de crédito <span className="hero-ending">antes de decidir.</span>
           </h1>
           <p className="hero-lead">
             Simule entrada, parcelas, prazo e custo total para seu imóvel ou
