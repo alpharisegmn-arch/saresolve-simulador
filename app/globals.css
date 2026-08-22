@@ -229,6 +229,7 @@ button {
   align-items: center;
   gap: 10px;
   color: #aec9f5;
+  font-weight: 300;
 }
 
 .eyebrow span {
