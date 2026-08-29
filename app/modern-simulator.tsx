@@ -89,6 +89,18 @@ export function ModernSimulator() {
     setStep(3);
   }
 
+  function goToDetails() {
+    setStep(2);
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      window.setTimeout(() => {
+        document.getElementById("simulador")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+    }
+  }
+
   function tracking() {
     const params = new URLSearchParams(window.location.search);
     return { utmSource: params.get("utm_source") || undefined, utmMedium: params.get("utm_medium") || undefined, utmCampaign: params.get("utm_campaign") || undefined, utmTerm: params.get("utm_term") || undefined, utmContent: params.get("utm_content") || undefined, gclid: params.get("gclid") || undefined, fbclid: params.get("fbclid") || undefined, sourcePage: window.location.href, referrer: document.referrer || undefined };
@@ -122,10 +134,10 @@ export function ModernSimulator() {
     <div className="modern-progress" aria-label={`Etapa ${step} de 3`}><span className="active" /><span className={step >= 2 ? "active" : ""} /><span className={step >= 3 ? "active" : ""} /></div>
     {step === 1 && <div className="modern-stage">
       <div className="modern-options">
-        <button type="button" className={creditType === "property" ? "selected" : ""} onClick={() => selectType("property")}><span className="modern-option-image"><Image src="/quiz-imovel-casa.png" alt="" fill sizes="(max-width: 820px) 90vw, 430px" /></span><span><strong>Um imóvel</strong><small>Casa, apartamento ou terreno</small></span><i><Check /></i></button>
-        <button type="button" className={creditType === "vehicle" ? "selected" : ""} onClick={() => selectType("vehicle")}><span className="modern-option-image"><Image src="/quiz-automovel-branco.png" alt="" fill sizes="(max-width: 820px) 90vw, 430px" /></span><span><strong>Um automóvel</strong><small>Carro novo ou usado</small></span><i><Check /></i></button>
+        <button type="button" className={creditType === "property" ? "selected" : ""} onClick={() => selectType("property")}><span className="modern-option-image"><Image src="/quiz-imovel-casa.png" alt="" fill sizes="(max-width: 820px) 90vw, 430px" /></span><span><strong>Imóvel</strong><small>Casa, apartamento ou terreno</small></span><i><Check /></i></button>
+        <button type="button" className={creditType === "vehicle" ? "selected" : ""} onClick={() => selectType("vehicle")}><span className="modern-option-image"><Image src="/quiz-automovel-branco.png" alt="" fill sizes="(max-width: 820px) 90vw, 430px" /></span><span><strong>Automóvel</strong><small>Carro novo ou usado</small></span><i><Check /></i></button>
       </div>
-      <button className="modern-next" type="button" disabled={!creditType} onClick={() => setStep(2)}>Continuar <span>→</span></button>
+      <button className="modern-next" type="button" disabled={!creditType} onClick={goToDetails}>Continuar <span>→</span></button>
     </div>}
     {step === 2 && <div className="modern-stage">
       <p className="modern-stage-description">Arraste para definir o valor aproximado do seu crédito.</p>

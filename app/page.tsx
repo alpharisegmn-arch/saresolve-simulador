@@ -26,7 +26,7 @@ export default function Home() {
           </h1>
           <p className="hero-lead">
             Simule entrada, parcelas, prazo e custo total para seu imóvel ou
-            automóvel. Veja as diferenças com números claros.
+            automóvel. Veja como pode se encaixar no seu orçamento.
           </p>
           <div className="hero-trust" aria-label="Características da simulação">
             <span>Grátis</span>
