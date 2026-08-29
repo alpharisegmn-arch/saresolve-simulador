@@ -173,7 +173,7 @@ function ComparisonChart({ result }: { result: ComparisonResult }) {
   );
 }
 
-function Results({
+export function Results({
   result,
   onRestart,
 }: {

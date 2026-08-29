@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
+import "./modern-hero.css";
 
 const inter = Inter({
   variable: "--font-inter",

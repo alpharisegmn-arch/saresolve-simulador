@@ -1,4 +1,4 @@
-import { Simulator } from "./simulator";
+import { ModernSimulator as Simulator } from "./modern-simulator";
 import { Logo } from "./logo";
 
 export default function Home() {
@@ -16,15 +16,13 @@ export default function Home() {
         </nav>
       </header>
 
-      <section className="hero" id="inicio">
-        <div className="hero-copy">
-          <div className="eyebrow">
-            <span aria-hidden="true" />
-            Simule o crédito para seu carro ou imóvel
-          </div>
+      <section className="hero hero-modern" id="inicio">
+        <div className="hero-modern-grid">
+        <div className="hero-copy hero-modern-copy">
+          <p className="hero-modern-kicker">Simule seu carro ou imóvel</p>
           <h1>
-            Simule as <span className="hero-highlight">melhores modalidades</span>{" "}
-            de crédito <span className="hero-ending">antes de decidir.</span>
+            Encontre o caminho mais <span className="hero-highlight">inteligente</span>{" "}
+            para o seu sonho.
           </h1>
           <p className="hero-lead">
             Simule entrada, parcelas, prazo e custo total para seu imóvel ou
@@ -37,15 +35,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="simulator-shell" id="simulador">
-          <div className="simulator-heading">
-            <span className="step-index">01</span>
-            <div>
-              <p>Comece por aqui</p>
-              <h2>Qual crédito você procura?</h2>
-            </div>
-          </div>
+        <div className="simulator-shell simulator-shell-modern" id="simulador">
           <Simulator />
+        </div>
         </div>
       </section>
 
