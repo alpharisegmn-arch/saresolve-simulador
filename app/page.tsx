@@ -41,8 +41,6 @@ export default function Home() {
         </div>
       </section>
 
-      <div id="results-portal" />
-
       <section className="clarity-strip" aria-label="Itens da comparação">
         <p>Uma comparação. Quatro respostas essenciais.</p>
         <div>

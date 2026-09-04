@@ -178,7 +178,7 @@ export function Results({
   onRestart,
 }: {
   result: ComparisonResult;
-  onRestart: () => void;
+  onRestart?: () => void;
 }) {
   const consortiumLower = result.consortium.total < result.financing.total;
   const financingShorter =
@@ -210,9 +210,11 @@ export function Results({
               uma comparação clara.
             </p>
           </div>
-          <button className="secondary-button" type="button" onClick={onRestart}>
-            Nova simulação
-          </button>
+          {onRestart && (
+            <button className="secondary-button" type="button" onClick={onRestart}>
+              Nova simulação
+            </button>
+          )}
         </header>
 
         <div className="comparison-heading">

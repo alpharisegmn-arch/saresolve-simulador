@@ -6,4 +6,29 @@
 .hero.hero-modern { display:block; min-height:75vh; }
 .hero-modern-grid { min-height:calc(75vh - 192px); }
 
+.modern-capture > .modern-whatsapp-confirm {
+  align-items: center;
+  margin: 0 0 18px !important;
+  padding: 10px 12px;
+  color: #b9fbd5;
+  background: rgba(5, 87, 57, 0.34);
+  border: 1px solid rgba(37, 224, 129, 0.28);
+  border-radius: 8px;
+  font-weight: 650;
+  transition: background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.modern-capture > .modern-whatsapp-confirm input {
+  flex: 0 0 auto;
+  accent-color: #18d978;
+}
+
+.modern-capture > .modern-whatsapp-confirm:has(input:checked) {
+  color: #d9ffea;
+  background: rgba(4, 119, 72, 0.48);
+  border-color: rgba(44, 243, 144, 0.5);
+  box-shadow: 0 8px 22px rgba(0, 56, 34, 0.2);
+}
+
 @media(max-width:820px){.hero.hero-modern{min-height:100vh}.hero-modern-grid{min-height:auto}}

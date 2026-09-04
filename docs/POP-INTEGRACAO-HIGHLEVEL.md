@@ -8,6 +8,8 @@ Conectar o simulador SaResolve a uma subconta do HighLevel para:
 - aplicar as tags corretas;
 - criar a oportunidade no funil definido;
 - preencher os campos personalizados da oportunidade;
+- registrar novas simulações como anotações quando o contato já possui uma
+  oportunidade no funil;
 - manter os tokens OAuth seguros e renováveis.
 
 ## 2. Estrutura usada

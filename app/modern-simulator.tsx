@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { type FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 import { Check } from "lucide-react";
 import { SITE_CONFIG, type CreditType } from "./config";
 import { formatCurrency, type ComparisonResult } from "./finance";
-import { Results } from "./simulator";
-import { createPortal } from "react-dom";
+import { saveSimulationResult } from "./result-storage";
 
 type LeadForm = {
   fullName: string;
@@ -42,6 +42,7 @@ function CurrencyField({ value, onChange, placeholder, label }: { value: string;
 }
 
 export function ModernSimulator() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [creditType, setCreditType] = useState<CreditType | null>(null);
   const [creditValue, setCreditValue] = useState("");
@@ -52,21 +53,12 @@ export function ModernSimulator() {
   const [error, setError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<ComparisonResult | null>(null);
-  const [resultsPortal, setResultsPortal] = useState<HTMLElement | null>(null);
   const activeType = creditType ?? "property";
   const config = SITE_CONFIG.credit[activeType];
   const creditNumber = parseMoney(creditValue) || config.min;
   const creditProgress = ((creditNumber - config.min) / (config.max - config.min)) * 100;
   const installmentMin = activeType === "property" ? 600 : 450;
   const label = activeType === "property" ? "Imóvel" : "Automóvel";
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setResultsPortal(document.getElementById("results-portal"));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
 
   function selectType(type: CreditType) {
     setCreditType(type);
@@ -115,16 +107,11 @@ export function ModernSimulator() {
       const response = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...lead, householdIncome: parseMoney(lead.householdIncome), city: "", state: "", hasEntry: entryChoice === "yes", availableEntry: entryChoice === "yes" ? parseMoney(availableEntry) : 0, creditType, desiredCredit: parseMoney(creditValue), idealInstallment: parseMoney(idealInstallment), tracking: tracking() }) });
       const payload = (await response.json()) as { error?: string; result?: ComparisonResult };
       if (!response.ok || !payload.result) throw new Error(payload.error || "Não foi possível concluir a simulação.");
-      setResult(payload.result);
-      window.setTimeout(() => document.getElementById("resultado")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      saveSimulationResult(payload.result);
+      router.push("/resultado");
     } catch (caught) {
       setSubmitError(caught instanceof Error ? caught.message : "Não foi possível concluir. Tente novamente.");
     } finally { setSubmitting(false); }
-  }
-
-  function restart() {
-    setStep(1); setCreditType(null); setCreditValue(""); setIdealInstallment(""); setEntryChoice(""); setAvailableEntry(""); setLead(initialLead); setResult(null);
-    document.getElementById("simulador")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   return <>
@@ -147,10 +134,9 @@ export function ModernSimulator() {
       {error && <p className="modern-error" role="alert">{error}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(1)}>Voltar</button><button className="modern-next" type="button" onClick={advance}>Continuar <span>→</span></button></div>
     </div>}
     {step === 3 && <form className="modern-capture" onSubmit={submit}>
-      <p>Etapa final</p><h3>Receba os dados da simulação pelo WhatsApp.</h3><small>Preencha seus dados para receber seu comparativo personalizado.</small><div className="modern-summary"><strong>{label}</strong><b>{formatCurrency(creditNumber)}</b><span>Parcela ideal: {formatCurrency(parseMoney(idealInstallment))}</span></div>
-      <label><span>Nome completo</span><input value={lead.fullName} onChange={(event) => setLead({ ...lead, fullName: event.target.value })} autoComplete="name" placeholder="Como podemos chamar você?" minLength={3} required /></label><label><span>WhatsApp para receber os dados</span><input value={lead.phone} onChange={(event) => setLead({ ...lead, phone: maskPhone(event.target.value), phoneConfirmed: false })} autoComplete="tel" inputMode="tel" placeholder="(11) 99999-9999" required /></label><label className="modern-check"><input type="checkbox" checked={lead.phoneConfirmed} onChange={(event) => setLead({ ...lead, phoneConfirmed: event.target.checked })} required /><span>Confirmo que o WhatsApp informado está correto.</span></label><label><span>Renda média familiar</span><CurrencyField value={lead.householdIncome} onChange={(value) => setLead({ ...lead, householdIncome: value })} label="Renda média familiar" placeholder="Ex.: 8.000,00" /></label><label className="modern-check"><input type="checkbox" checked={lead.consent} onChange={(event) => setLead({ ...lead, consent: event.target.checked })} required /><span>Li a <a href="/politica-de-privacidade" target="_blank">Política de Privacidade</a> e autorizo o uso dos meus dados para esta simulação.</span></label>{submitError && <p className="modern-error" role="alert">{submitError}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(2)}>Voltar</button><button className="modern-next" type="submit" disabled={submitting}>{submitting ? "Preparando..." : "Simular"} {!submitting && <span>→</span>}</button></div>
+      <p>Etapa final</p><h3>Receba os dados da simulação pelo WhatsApp.</h3><small>Preencha seus dados para receber a simulação e ver o comparativo completo na próxima página.</small><div className="modern-summary"><strong>{label}</strong><b>{formatCurrency(creditNumber)}</b><span>Parcela ideal: {formatCurrency(parseMoney(idealInstallment))}</span></div>
+      <label><span>Nome completo</span><input value={lead.fullName} onChange={(event) => setLead({ ...lead, fullName: event.target.value })} autoComplete="name" placeholder="Como podemos chamar você?" minLength={3} required /></label><label><span>WhatsApp para receber os dados</span><input value={lead.phone} onChange={(event) => setLead({ ...lead, phone: maskPhone(event.target.value), phoneConfirmed: false })} autoComplete="tel" inputMode="tel" placeholder="(11) 99999-9999" required /></label><label className="modern-check modern-whatsapp-confirm"><input type="checkbox" checked={lead.phoneConfirmed} onChange={(event) => setLead({ ...lead, phoneConfirmed: event.target.checked })} required /><span>Confirmo que o WhatsApp informado está correto.</span></label><label><span>Renda média familiar</span><CurrencyField value={lead.householdIncome} onChange={(value) => setLead({ ...lead, householdIncome: value })} label="Renda média familiar" placeholder="Ex.: 8.000,00" /></label><label className="modern-check"><input type="checkbox" checked={lead.consent} onChange={(event) => setLead({ ...lead, consent: event.target.checked })} required /><span>Li a <a href="/politica-de-privacidade" target="_blank">Política de Privacidade</a> e autorizo a SaResolve a usar meus dados e entrar em contato pelo WhatsApp sobre esta simulação.</span></label>{submitError && <p className="modern-error" role="alert">{submitError}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(2)}>Voltar</button><button className="modern-next" type="submit" disabled={submitting}>{submitting ? "Preparando..." : "Simular"} {!submitting && <span>→</span>}</button></div>
     </form>}
     <p className="modern-privacy">Seus dados são usados apenas para a simulação e o contato autorizado.</p>
-    {result && resultsPortal && createPortal(<Results result={result} onRestart={restart} />, resultsPortal)}
   </>;
 }

@@ -66,6 +66,10 @@ type OpportunityCustomField = {
   model?: string;
 };
 
+type Opportunity = {
+  id: string;
+};
+
 function comparableName(value: string) {
   return value
     .normalize("NFD")
@@ -186,11 +190,133 @@ async function resolvePipeline(
     : null;
 }
 
+async function findExistingOpportunity(
+  installation: HighLevelInstallation,
+  contactId: string,
+  pipelineId: string,
+) {
+  const params = new URLSearchParams({
+    locationId: installation.locationId,
+    pipelineId,
+    contactId,
+    status: "all",
+    order: "added_asc",
+    limit: "20",
+  });
+  const response = await highLevelFetch(
+    installation,
+    `/opportunities/search?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Version: "v3" },
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `HighLevel recusou a consulta de oportunidades (${response.status}): ${await response.text()}`,
+    );
+  }
+
+  const payload = (await response.json()) as {
+    opportunities?: Opportunity[];
+  };
+  return payload.opportunities?.[0] ?? null;
+}
+
+function simulationNoteBody(lead: HighLevelLead) {
+  const result = lead.result;
+  const type = result.creditType === "property" ? "Imóvel" : "Automóvel";
+  const lowerTotal =
+    result.consortium.total <= result.financing.total
+      ? "Consórcio"
+      : "Financiamento";
+  const createdAt = new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
+  const campaign = [
+    lead.tracking.utmSource && `Origem: ${lead.tracking.utmSource}`,
+    lead.tracking.utmMedium && `Mídia: ${lead.tracking.utmMedium}`,
+    lead.tracking.utmCampaign && `Campanha: ${lead.tracking.utmCampaign}`,
+  ].filter(Boolean);
+
+  return [
+    `NOVA SIMULAÇÃO PELO SITE — ${createdAt}`,
+    "",
+    `Categoria: ${type}`,
+    `Crédito desejado: ${formatCurrency(result.creditValue)}`,
+    `Parcela ideal: ${formatCurrency(result.idealInstallment)}`,
+    `Entrada disponível: ${lead.hasEntry ? formatCurrency(lead.availableEntry) : "Não informada"}`,
+    `Renda familiar: ${formatCurrency(lead.householdIncome)}`,
+    "",
+    `Consórcio: ${formatCurrency(result.consortium.installment)}/mês por ${result.consortium.months} meses — total ${formatCurrency(result.consortium.total)}`,
+    `Financiamento: ${formatCurrency(result.financing.firstInstallment)}/mês por ${result.financing.months} meses — total ${formatCurrency(result.financing.total)}`,
+    `Diferença no custo total: ${formatCurrency(result.comparison.totalDifference)}`,
+    `Menor total estimado: ${lowerTotal}`,
+    ...(campaign.length ? ["", ...campaign] : []),
+    `ID da simulação: ${lead.leadId}`,
+  ].join("\n");
+}
+
+async function createSimulationNote(
+  installation: HighLevelInstallation,
+  contactId: string,
+  lead: HighLevelLead,
+) {
+  const response = await highLevelFetch(
+    installation,
+    `/contacts/${encodeURIComponent(contactId)}/notes`,
+    {
+      method: "POST",
+      headers: { Version: "v3" },
+      body: JSON.stringify({
+        ...(installation.userId ? { userId: installation.userId } : {}),
+        title: "Nova simulação pelo site",
+        body: simulationNoteBody(lead),
+        color: "#16a366",
+        pinned: false,
+      }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `HighLevel recusou a anotação (${response.status}): ${await response.text()}`,
+    );
+  }
+}
+
+async function addSimulationTags(
+  installation: HighLevelInstallation,
+  contactId: string,
+  lead: HighLevelLead,
+) {
+  const response = await highLevelFetch(
+    installation,
+    `/contacts/${encodeURIComponent(contactId)}/tags`,
+    {
+      method: "POST",
+      headers: { Version: "v3" },
+      body: JSON.stringify({
+        tags: [
+          "lead simulador saresolve",
+          lead.result.creditType === "property" ? "[imóvel]" : "[auto]",
+        ],
+      }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `HighLevel recusou as etiquetas (${response.status}): ${await response.text()}`,
+    );
+  }
+}
+
 export async function syncLeadToHighLevel(lead: HighLevelLead) {
   if (
     !process.env.GHL_CLIENT_ID ||
     !process.env.GHL_CLIENT_SECRET ||
-    !process.env.DATABASE_URL
+    !process.env.GHL_TOKEN_ENCRYPTION_KEY
   ) {
     return { status: "not_configured" as const };
   }
@@ -205,17 +331,13 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
     "/contacts/upsert",
     {
       method: "POST",
+      headers: { Version: "v3" },
       body: JSON.stringify({
         locationId: installation.locationId,
         name: lead.fullName,
         phone: brazilianPhone(lead.phone),
         source: "Simulador SaResolve",
-        tags: [
-          "lead simulador saresolve",
-          lead.result.creditType === "property"
-            ? "[imóvel]"
-            : "[auto]",
-        ],
+        createNewIfDuplicateAllowed: false,
       }),
     },
   );
@@ -226,54 +348,74 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
     );
   }
   const contactPayload = (await contactResponse.json()) as {
+    new?: boolean;
     contact?: { id?: string };
     id?: string;
   };
   const contactId = contactPayload.contact?.id ?? contactPayload.id;
   if (!contactId) throw new Error("HighLevel não retornou o ID do contato.");
+  await addSimulationTags(installation, contactId, lead);
 
   const pipeline = await resolvePipeline(installation);
-  let opportunityStatus: "created" | "pipeline_not_found" =
+  let opportunityStatus: "created" | "existing" | "pipeline_not_found" =
     "pipeline_not_found";
+  let noteStatus: "created" | "not_needed" = "not_needed";
 
   if (pipeline) {
-    const customFields = await resolveOpportunityCustomFields(
+    const existingOpportunity = await findExistingOpportunity(
       installation,
-      lead,
+      contactId,
+      pipeline.pipelineId,
     );
-    const opportunityResponse = await highLevelFetch(
-      installation,
-      "/opportunities/upsert",
-      {
-        method: "POST",
-        headers: { Version: "v3" },
-        body: JSON.stringify({
-          locationId: installation.locationId,
-          pipelineId: pipeline.pipelineId,
-          pipelineStageId: pipeline.pipelineStageId,
-          contactId,
-          name: `${lead.fullName} — ${
-            lead.result.creditType === "property" ? "Imóvel" : "Automóvel"
-          }`,
-          status: "open",
-          monetaryValue: lead.result.creditValue,
-          source: "Simulador SaResolve",
-          customFields,
-        }),
-      },
-    );
-    if (!opportunityResponse.ok) {
-      throw new Error(
-        `HighLevel recusou a oportunidade (${opportunityResponse.status}): ${await opportunityResponse.text()}`,
+
+    if (existingOpportunity) {
+      await createSimulationNote(installation, contactId, lead);
+      opportunityStatus = "existing";
+      noteStatus = "created";
+    } else {
+      const customFields = await resolveOpportunityCustomFields(
+        installation,
+        lead,
       );
+      const opportunityResponse = await highLevelFetch(
+        installation,
+        "/opportunities/",
+        {
+          method: "POST",
+          headers: { Version: "v3" },
+          body: JSON.stringify({
+            locationId: installation.locationId,
+            pipelineId: pipeline.pipelineId,
+            pipelineStageId: pipeline.pipelineStageId,
+            contactId,
+            name: `${lead.fullName} — ${
+              lead.result.creditType === "property" ? "Imóvel" : "Automóvel"
+            }`,
+            status: "open",
+            monetaryValue: lead.result.creditValue,
+            source: "Simulador SaResolve",
+            customFields,
+          }),
+        },
+      );
+      if (!opportunityResponse.ok) {
+        throw new Error(
+          `HighLevel recusou a oportunidade (${opportunityResponse.status}): ${await opportunityResponse.text()}`,
+        );
+      }
+      opportunityStatus = "created";
     }
-    opportunityStatus = "created";
+  } else if (contactPayload.new === false) {
+    await createSimulationNote(installation, contactId, lead);
+    noteStatus = "created";
   }
 
   return {
     status: "sent" as const,
     contactId,
+    contactWasCreated: contactPayload.new === true,
     opportunityStatus,
+    noteStatus,
     locationId: installation.locationId,
   };
 }

@@ -42,3 +42,15 @@ export const leadRateLimits = sqliteTable("lead_rate_limits", {
   windowStartedAt: integer("window_started_at").notNull(),
   count: integer("count").notNull().default(1),
 });
+
+export const highLevelInstallations = sqliteTable("highlevel_installations", {
+  locationId: text("location_id").primaryKey(),
+  companyId: text("company_id"),
+  userId: text("user_id"),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  scopes: text("scopes").notNull().default(""),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
