@@ -316,7 +316,7 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
   if (
     !process.env.GHL_CLIENT_ID ||
     !process.env.GHL_CLIENT_SECRET ||
-    !process.env.GHL_TOKEN_ENCRYPTION_KEY
+    !process.env.DATABASE_URL
   ) {
     return { status: "not_configured" as const };
   }
