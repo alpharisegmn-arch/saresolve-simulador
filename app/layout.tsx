@@ -3,6 +3,7 @@ import { Inter, Lora } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import "./modern-hero.css";
+import { MetaPixel } from "./meta-pixel";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -57,7 +58,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.variable} ${lora.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${lora.variable}`}>
+        <MetaPixel pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID} />
+        {children}
+      </body>
     </html>
   );
 }

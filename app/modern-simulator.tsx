@@ -7,6 +7,7 @@ import { Check } from "lucide-react";
 import { SITE_CONFIG, type CreditType } from "./config";
 import { formatCurrency, type ComparisonResult } from "./finance";
 import { saveSimulationResult } from "./result-storage";
+import { trackMetaLead } from "./meta-pixel";
 
 type LeadForm = {
   fullName: string;
@@ -105,8 +106,9 @@ export function ModernSimulator() {
     setSubmitError("");
     try {
       const response = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...lead, householdIncome: parseMoney(lead.householdIncome), city: "", state: "", hasEntry: entryChoice === "yes", availableEntry: entryChoice === "yes" ? parseMoney(availableEntry) : 0, creditType, desiredCredit: parseMoney(creditValue), idealInstallment: parseMoney(idealInstallment), tracking: tracking() }) });
-      const payload = (await response.json()) as { error?: string; result?: ComparisonResult };
-      if (!response.ok || !payload.result) throw new Error(payload.error || "Não foi possível concluir a simulação.");
+      const payload = (await response.json()) as { id?: string; error?: string; result?: ComparisonResult };
+      if (!response.ok || !payload.result || !payload.id) throw new Error(payload.error || "Não foi possível concluir a simulação.");
+      trackMetaLead(payload.id);
       saveSimulationResult(payload.result);
       router.push("/resultado");
     } catch (caught) {

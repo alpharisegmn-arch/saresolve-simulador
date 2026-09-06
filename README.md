@@ -16,7 +16,9 @@ Variáveis opcionais:
 
 - `LEAD_WEBHOOK_URL`: endpoint HTTPS para receber novos leads.
 - `LEAD_WEBHOOK_SECRET`: segredo para assinatura HMAC do webhook.
-- `NEXT_PUBLIC_META_PIXEL_ID`: reservado para Meta Pixel.
+- `NEXT_PUBLIC_META_PIXEL_ID`: ID público do Meta Pixel usado no navegador.
+- `META_PIXEL_ID` e `META_CAPI_ACCESS_TOKEN`: credenciais da API de Conversões; configure-as somente como variáveis secretas no ambiente de hospedagem.
+- `META_CAPI_TEST_EVENT_CODE`: opcional e temporário, para validar eventos na seção “Eventos de teste” do Gerenciador de Eventos.
 - `NEXT_PUBLIC_GA_ID`: reservado para Google Analytics.
 - `NEXT_PUBLIC_GOOGLE_ADS_ID`: reservado para Google Ads.
 - `NEXT_PUBLIC_WHATSAPP_NUMBER`: reservado para a integração futura.

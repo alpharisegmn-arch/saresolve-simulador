@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SITE_CONFIG } from "../../config";
 import { calculateComparison } from "../../finance";
 import { syncLeadToHighLevel } from "../../lib/highlevel/client";
+import { sendMetaLeadEvent } from "../../lib/meta-capi";
 
 export const runtime = "nodejs";
 
@@ -86,6 +87,18 @@ async function signPayload(payload: string, secret: string) {
   return Array.from(new Uint8Array(signature))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function getCookie(request: Request, name: string) {
+  const encodedName = `${name}=`;
+  return (
+    request.headers
+      .get("cookie")
+      ?.split(";")
+      .map((item) => item.trim())
+      .find((item) => item.startsWith(encodedName))
+      ?.slice(encodedName.length) ?? null
+  );
 }
 
 export async function POST(request: Request) {
@@ -203,11 +216,33 @@ export async function POST(request: Request) {
     crmStatus = "pending";
   }
 
+  const ipAddress =
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null;
+  const fbp = getCookie(request, "_fbp");
+  const fbc =
+    getCookie(request, "_fbc") ??
+    (parsed.tracking.fbclid
+      ? `fb.1.${Date.now()}.${parsed.tracking.fbclid}`
+      : null);
+  const metaResult = await sendMetaLeadEvent({
+    eventId: leadId,
+    eventSourceUrl: parsed.tracking.sourcePage ?? request.headers.get("referer") ?? "",
+    fullName: parsed.fullName,
+    phone: parsed.phone,
+    ipAddress,
+    userAgent: request.headers.get("user-agent"),
+    fbp,
+    fbc,
+  });
+
   return Response.json({
     id: leadId,
     persisted,
     webhookStatus,
     crmStatus,
+    metaStatus: metaResult.status,
     result,
   });
 }
