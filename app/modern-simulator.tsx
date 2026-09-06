@@ -140,5 +140,14 @@ export function ModernSimulator() {
       <label><span>Nome completo</span><input value={lead.fullName} onChange={(event) => setLead({ ...lead, fullName: event.target.value })} autoComplete="name" placeholder="Como podemos chamar você?" minLength={3} required /></label><label><span>WhatsApp para receber os dados</span><input value={lead.phone} onChange={(event) => setLead({ ...lead, phone: maskPhone(event.target.value), phoneConfirmed: false })} autoComplete="tel" inputMode="tel" placeholder="(11) 99999-9999" required /></label><label className="modern-check modern-whatsapp-confirm"><input type="checkbox" checked={lead.phoneConfirmed} onChange={(event) => setLead({ ...lead, phoneConfirmed: event.target.checked })} required /><span>Confirmo que o WhatsApp informado está correto.</span></label><label><span>Renda média familiar</span><CurrencyField value={lead.householdIncome} onChange={(value) => setLead({ ...lead, householdIncome: value })} label="Renda média familiar" placeholder="Ex.: 8.000,00" /></label><label className="modern-check"><input type="checkbox" checked={lead.consent} onChange={(event) => setLead({ ...lead, consent: event.target.checked })} required /><span>Li a <a href="/politica-de-privacidade" target="_blank">Política de Privacidade</a> e autorizo a SaResolve a usar meus dados e entrar em contato pelo WhatsApp sobre esta simulação.</span></label>{submitError && <p className="modern-error" role="alert">{submitError}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(2)}>Voltar</button><button className="modern-next" type="submit" disabled={submitting}>{submitting ? "Preparando..." : "Simular"} {!submitting && <span>→</span>}</button></div>
     </form>}
     <p className="modern-privacy">Seus dados são usados apenas para a simulação e o contato autorizado.</p>
+    {submitting && (
+      <div className="simulation-loading" role="status" aria-live="assertive">
+        <div className="simulation-loading-card">
+          <span className="simulation-loading-spinner" aria-hidden="true" />
+          <strong>Preparando sua simulação</strong>
+          <p>Estamos montando seu comparativo personalizado.</p>
+        </div>
+      </div>
+    )}
   </>;
 }
