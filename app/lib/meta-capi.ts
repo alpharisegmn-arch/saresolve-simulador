@@ -76,8 +76,25 @@ export async function sendMetaLeadEvent(input: LeadEventInput) {
         signal: AbortSignal.timeout(5_000),
       },
     );
-    return { status: response.ok ? ("sent" as const) : ("pending" as const) };
-  } catch {
+    const details = (await response.json().catch(() => null)) as
+      | { events_received?: number; error?: { message?: string; code?: number } }
+      | null;
+    if (!response.ok) {
+      console.error("Meta CAPI rejected Lead event", {
+        status: response.status,
+        errorCode: details?.error?.code,
+        errorMessage: details?.error?.message,
+      });
+      return { status: "pending" as const };
+    }
+    console.info("Meta CAPI accepted Lead event", {
+      eventsReceived: details?.events_received ?? 0,
+    });
+    return { status: "sent" as const };
+  } catch (error) {
+    console.error("Meta CAPI Lead event could not be sent", {
+      reason: error instanceof Error ? error.message : "Unknown error",
+    });
     return { status: "pending" as const };
   }
 }
