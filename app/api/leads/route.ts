@@ -204,6 +204,7 @@ export async function POST(request: Request) {
       leadId,
       fullName: parsed.fullName,
       phone: parsed.phone,
+      city: parsed.city,
       householdIncome: parsed.householdIncome,
       hasEntry: parsed.hasEntry ?? parsed.availableEntry > 0,
       availableEntry: parsed.availableEntry,

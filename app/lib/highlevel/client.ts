@@ -16,6 +16,7 @@ export type HighLevelLead = {
   leadId: string;
   fullName: string;
   phone: string;
+  city: string;
   householdIncome: number;
   hasEntry: boolean;
   availableEntry: number;
@@ -85,6 +86,7 @@ const opportunityFieldAliases: Record<string, string[]> = {
   desiredCredit: ["valor do credito", "credito simulacao"],
   idealInstallment: ["parcela ideal", "parcela ideal simulacao"],
   householdIncome: ["renda media familiar"],
+  city: ["cidade"],
 };
 
 function opportunityFieldValues(lead: HighLevelLead) {
@@ -97,6 +99,7 @@ function opportunityFieldValues(lead: HighLevelLead) {
     desiredCredit: formatCurrency(lead.result.creditValue),
     idealInstallment: formatCurrency(lead.result.idealInstallment),
     householdIncome: formatCurrency(lead.householdIncome),
+    city: lead.city,
   };
 }
 
@@ -336,6 +339,7 @@ export async function syncLeadToHighLevel(lead: HighLevelLead) {
         locationId: installation.locationId,
         name: lead.fullName,
         phone: brazilianPhone(lead.phone),
+        ...(lead.city ? { city: lead.city } : {}),
         source: "Simulador SaResolve",
         createNewIfDuplicateAllowed: false,
       }),
