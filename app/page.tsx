@@ -9,7 +9,6 @@ export default function Home() {
           <Logo light />
         </a>
         <nav aria-label="Navegação principal">
-          <a href="#como-funciona">Como funciona</a>
           <a className="header-cta" href="#simulador">
             Simular agora
           </a>
@@ -39,47 +38,6 @@ export default function Home() {
           <Simulator />
         </div>
         </div>
-      </section>
-
-      <section className="clarity-strip" aria-label="Itens da comparação">
-        <p>Uma comparação. Quatro respostas essenciais.</p>
-        <div>
-          <span><b>01</b> Entrada</span>
-          <span><b>02</b> Parcelas</span>
-          <span><b>03</b> Prazo</span>
-          <span><b>04</b> Custo total</span>
-        </div>
-      </section>
-
-      <section className="how-section" id="como-funciona">
-        <div className="section-heading">
-          <p className="section-kicker">Como funciona</p>
-          <h2>Da intenção aos números em menos de um minuto.</h2>
-          <p>
-            Sem cenários genéricos. A comparação é calculada a partir do valor
-            que você realmente procura.
-          </p>
-        </div>
-        <ol className="steps">
-          <li>
-            <span>01</span>
-            <div className="step-line" aria-hidden="true" />
-            <h3>Informe seu objetivo</h3>
-            <p>Escolha imóvel ou automóvel e diga o valor que procura.</p>
-          </li>
-          <li>
-            <span>02</span>
-            <div className="step-line" aria-hidden="true" />
-            <h3>Veja lado a lado</h3>
-            <p>Comparamos entrada, parcelas, prazos e custos estimados.</p>
-          </li>
-          <li>
-            <span>03</span>
-            <div className="step-line" aria-hidden="true" />
-            <h3>Decida com clareza</h3>
-            <p>Avalie os números sem selos ou recomendações predefinidas.</p>
-          </li>
-        </ol>
       </section>
 
       <footer>

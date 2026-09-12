@@ -27,7 +27,7 @@ const leadSchema = z.object({
     .string()
     .transform((value) => value.replace(/\D/g, ""))
     .refine((value) => value.length === 10 || value.length === 11),
-  phoneConfirmed: z.literal(true),
+  phoneConfirmed: z.boolean().optional().default(false),
   householdIncome: z.number().finite().min(0).max(100_000_000),
   city: z.string().trim().max(100).optional().default(""),
   state: z.string().trim().max(2).optional().default(""),

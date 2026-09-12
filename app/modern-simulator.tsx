@@ -12,13 +12,13 @@ import { trackMetaLead } from "./meta-pixel";
 type LeadForm = {
   fullName: string;
   phone: string;
-  phoneConfirmed: boolean;
+  city: string;
   householdIncome: string;
   consent: boolean;
   website: string;
 };
 
-const initialLead: LeadForm = { fullName: "", phone: "", phoneConfirmed: false, householdIncome: "", consent: false, website: "" };
+const initialLead: LeadForm = { fullName: "", phone: "", city: "", householdIncome: "", consent: false, website: "" };
 
 function parseMoney(value: string) {
   const digits = value.replace(/\D/g, "");
@@ -105,7 +105,7 @@ export function ModernSimulator() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const response = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...lead, householdIncome: parseMoney(lead.householdIncome), city: "", state: "", hasEntry: entryChoice === "yes", availableEntry: entryChoice === "yes" ? parseMoney(availableEntry) : 0, creditType, desiredCredit: parseMoney(creditValue), idealInstallment: parseMoney(idealInstallment), tracking: tracking() }) });
+      const response = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...lead, householdIncome: parseMoney(lead.householdIncome), state: "", hasEntry: entryChoice === "yes", availableEntry: entryChoice === "yes" ? parseMoney(availableEntry) : 0, creditType, desiredCredit: parseMoney(creditValue), idealInstallment: parseMoney(idealInstallment), tracking: tracking() }) });
       const payload = (await response.json()) as { id?: string; error?: string; result?: ComparisonResult };
       if (!response.ok || !payload.result || !payload.id) throw new Error(payload.error || "Não foi possível concluir a simulação.");
       trackMetaLead(payload.id);
@@ -136,8 +136,8 @@ export function ModernSimulator() {
       {error && <p className="modern-error" role="alert">{error}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(1)}>Voltar</button><button className="modern-next" type="button" onClick={advance}>Continuar <span>→</span></button></div>
     </div>}
     {step === 3 && <form className="modern-capture" onSubmit={submit}>
-      <p>Etapa final</p><h3>Receba os dados da simulação pelo WhatsApp.</h3><small>Preencha seus dados para receber a simulação e ver o comparativo completo na próxima página.</small><div className="modern-summary"><strong>{label}</strong><b>{formatCurrency(creditNumber)}</b><span>Parcela ideal: {formatCurrency(parseMoney(idealInstallment))}</span></div>
-      <label><span>Nome completo</span><input value={lead.fullName} onChange={(event) => setLead({ ...lead, fullName: event.target.value })} autoComplete="name" placeholder="Como podemos chamar você?" minLength={3} required /></label><label><span>WhatsApp para receber os dados</span><input value={lead.phone} onChange={(event) => setLead({ ...lead, phone: maskPhone(event.target.value), phoneConfirmed: false })} autoComplete="tel" inputMode="tel" placeholder="(11) 99999-9999" required /></label><label className="modern-check modern-whatsapp-confirm"><input type="checkbox" checked={lead.phoneConfirmed} onChange={(event) => setLead({ ...lead, phoneConfirmed: event.target.checked })} required /><span>Confirmo que o WhatsApp informado está correto.</span></label><label><span>Renda média familiar</span><CurrencyField value={lead.householdIncome} onChange={(value) => setLead({ ...lead, householdIncome: value })} label="Renda média familiar" placeholder="Ex.: 8.000,00" /></label><label className="modern-check"><input type="checkbox" checked={lead.consent} onChange={(event) => setLead({ ...lead, consent: event.target.checked })} required /><span>Li a <a href="/politica-de-privacidade" target="_blank">Política de Privacidade</a> e autorizo a SaResolve a usar meus dados e entrar em contato pelo WhatsApp sobre esta simulação.</span></label>{submitError && <p className="modern-error" role="alert">{submitError}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(2)}>Voltar</button><button className="modern-next" type="submit" disabled={submitting}>{submitting ? "Preparando..." : "Simular"} {!submitting && <span>→</span>}</button></div>
+      <p>Etapa final</p><h3>Receba os dados da simulação pelo <span className="headline-whatsapp">WhatsApp</span>.</h3><small>Preencha seus dados para receber a simulação e ver o comparativo completo na próxima página.</small><div className="modern-summary"><strong>{label}</strong><b>{formatCurrency(creditNumber)}</b><span>Parcela ideal: {formatCurrency(parseMoney(idealInstallment))}</span></div>
+      <label><span>Nome completo</span><input value={lead.fullName} onChange={(event) => setLead({ ...lead, fullName: event.target.value })} autoComplete="name" placeholder="Como podemos chamar você?" minLength={3} required /></label><label className="modern-whatsapp-field"><span>WhatsApp para receber os dados</span><input value={lead.phone} onChange={(event) => setLead({ ...lead, phone: maskPhone(event.target.value) })} autoComplete="tel" inputMode="tel" placeholder="(11) 99999-9999" required /></label><label><span>Cidade</span><input value={lead.city} onChange={(event) => setLead({ ...lead, city: event.target.value })} autoComplete="address-level2" placeholder="Digite sua cidade" minLength={2} required /></label><label><span>Renda média familiar</span><CurrencyField value={lead.householdIncome} onChange={(value) => setLead({ ...lead, householdIncome: value })} label="Renda média familiar" placeholder="Ex.: 8.000,00" /></label><label className="modern-check"><input type="checkbox" checked={lead.consent} onChange={(event) => setLead({ ...lead, consent: event.target.checked })} required /><span>Li a <a href="/politica-de-privacidade" target="_blank">Política de Privacidade</a> e autorizo a SaResolve a usar meus dados e entrar em contato pelo WhatsApp sobre esta simulação.</span></label>{submitError && <p className="modern-error" role="alert">{submitError}</p>}<div className="modern-actions"><button type="button" onClick={() => setStep(2)}>Voltar</button><button className="modern-next" type="submit" disabled={submitting}>{submitting ? "Preparando..." : "Simular"} {!submitting && <span>→</span>}</button></div>
     </form>}
     <p className="modern-privacy">Seus dados são usados apenas para a simulação e o contato autorizado.</p>
     {submitting && (

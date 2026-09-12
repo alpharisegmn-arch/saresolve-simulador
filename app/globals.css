@@ -1195,6 +1195,78 @@ footer > div:first-child,
   margin-top: 22px;
 }
 
+.result-next-step {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto 72px;
+  padding: 36px 40px;
+  color: #dce8f7;
+  background: linear-gradient(135deg, #10345e 0%, #0b213d 100%);
+  border: 1px solid rgba(116, 169, 255, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 5, 18, 0.24);
+}
+
+.result-next-step .result-kicker {
+  margin: 0 0 10px;
+  color: #83b3ff;
+}
+
+.result-next-step h2 {
+  max-width: 680px;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 550;
+  letter-spacing: -0.045em;
+}
+
+.result-next-step > p:not(.result-kicker) {
+  max-width: 720px;
+  margin: 14px 0 22px;
+  color: #bdd0e6;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.result-next-step a {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 16px;
+  color: #fff;
+  background: #c13584;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.result-next-step a:hover {
+  box-shadow: 0 10px 24px rgba(193, 53, 132, 0.42);
+  transform: translateY(-1px);
+}
+
+.instagram-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.instagram-icon-dot {
+  fill: currentColor;
+  stroke: none;
+}
+
+@media (max-width: 600px) {
+  .result-next-step {
+    width: calc(100% - 32px);
+    margin-bottom: 48px;
+    padding: 28px 22px;
+  }
+}
+
 .results {
   padding: 88px 0 100px;
   scroll-margin-top: 25px;

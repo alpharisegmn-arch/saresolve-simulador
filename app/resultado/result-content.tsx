@@ -40,5 +40,30 @@ export function ResultContent() {
     );
   }
 
-  return <Results result={result} />;
+  return (
+    <>
+      <Results result={result} />
+      <aside className="result-next-step" aria-label="Próximo passo">
+        <p className="result-kicker">Seu próximo passo</p>
+        <h2>Seu plano pode começar a tomar forma agora.</h2>
+        <p>
+          Em breve, um especialista da SaResolve entrará em contato para
+          transformar os dados da sua simulação em um plano personalizado e
+          apresentar as condições especiais mais adequadas ao seu perfil.
+        </p>
+        <a
+          href="https://www.instagram.com/saresolveoficial/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <svg className="instagram-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="5" />
+            <circle cx="12" cy="12" r="4" />
+            <circle cx="17.5" cy="6.5" r="1" className="instagram-icon-dot" />
+          </svg>
+          Siga a SaResolve no Instagram <span aria-hidden="true">→</span>
+        </a>
+      </aside>
+    </>
+  );
 }
